@@ -14,7 +14,8 @@ int data [2];
 byte address[][6] = {"1Node","2Node","3Node","4Node","5Node","6Node"};  //возможные номера труб
 
 void setup(){
-  Serial.begin(9600); //открываем порт для связи с ПК
+  //Serial.begin(9600); //открываем порт для связи с ПК
+  pinMode(3,OUTPUT);
   radio.begin(); //активировать модуль
   radio.setAutoAck(1);         //режим подтверждения приёма, 1 вкл 0 выкл
   radio.setRetries(0,15);     //(время между попыткой достучаться, число попыток)
@@ -37,14 +38,16 @@ void wait(){
   radio.stopListening();
   radio.openWritingPipe(address[0]);
   boolean Out=false;
+  digitalWrite(3,HIGH);
   while (Out== false){
-    digitalWrite(3,HIGH);
     if (digitalRead(6)== HIGH){
       delay(10);
       if(digitalRead(6)== HIGH){
         data[0]=nom;
         data[1]=2;
         Out=true;
+        digitalWrite(3,LOW);
+        delay(500);
         radio.write(&data, sizeof(data));
         if(sound){
           digitalWrite(4,HIGH);
@@ -54,7 +57,6 @@ void wait(){
       }
     }
   }
-  digitalWrite(3,LOW);
   radio.startListening();
   radio.openReadingPipe(1,address[0]);
 }
@@ -64,9 +66,10 @@ void loop() {
     while( radio.available(&pipeNo)){    // слушаем эфир со всех труб
       radio.read( &data, sizeof(data) );         // чиатем входящий сигнал
 
-      Serial.print("Recieved: "); Serial.println(data[1]);
+      //Serial.print("Recieved: "); Serial.println(data[1]);
    }
    if ((data[0]== nom) and (data[1]==1)){
+      
       wait();
    }
 }
