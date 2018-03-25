@@ -8,8 +8,10 @@ byte address[][6] = {"1Node", "2Node", "3Node", "4Node", "5Node", "6Node"}; //в
 
 byte counter;
 
+
 void setup() {
-  Serial.begin(9600); //открываем порт для связи с ПК
+  randomSeed(analogRead(0));
+  Serial.begin(57600); //открываем порт для связи с ПК
 
   radio.begin(); //активировать модуль
   radio.setAutoAck(1);         //режим подтверждения приёма, 1 вкл 0 выкл
@@ -32,14 +34,15 @@ void setup() {
 void wait(){
   radio.startListening();
   radio.openReadingPipe(1,address[0]);
+  int Knop=data[0];
   boolean Out=false;
   while (Out== false){
       byte pipeNo;                  
       while( radio.available(&pipeNo)){    // слушаем эфир со всех труб
         radio.read( &data, sizeof(data) );         // чиатем входящий сигнал
-        Serial.print("Recieved: "); Serial.println(data[1]);
+        Serial.print("Recieved: "); Serial.println(data[0]);
       }
-        if(data[1]==2){
+        if((data[0]== Knop) and (data[1]==2)){
           Out=true;
           digitalWrite(13,155);
     }
@@ -49,9 +52,19 @@ void wait(){
   radio.openWritingPipe(address[0]);
 }
 
-void loop() {
-  data[0]=1;
+void Classik(){
+  delay(2000);
+  data[0]=random(1,4);
+  //data[0]=3;
   data[1]=1;
-  radio.write(&data,sizeof(data));
+  
+  while (radio.write(&data,sizeof(data))){
+    radio.write(&data,sizeof(data));
+  }
+  Serial.print("Wait: "); Serial.println(data[0]);
   wait();
+}
+
+void loop() {
+  Classik();
 }
