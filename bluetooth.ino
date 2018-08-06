@@ -1,26 +1,21 @@
-//#include <SoftwareSerial.h>
+
 #include <StackList.h>
-#include "timer-api.h"
+//#include "timer-api.h"
 StackList <int> ButList;
 boolean training = false;
 boolean StopTraining=false;
-String mesage;
+String message;
 int reaction=0;
 int actionBut;
-//SoftwareSerial HC06(1,0);
 void setup() {
   Serial.begin(9600);
-//  HC06.begin(9600);
-  timer_init_ISR_1Hz(TIMER_DEFAULT);
+  //timer_init_ISR_1Hz(TIMER_DEFAULT);
 }
-void timer_handle_interrupts(int timer) {
-  reaction++;
- // if (Serial.available()){
-    chatHC06();
- // }
-}
+//void timer_handle_interrupts(int timer) {
+//  reaction++;
+//}
 void pushBut(){
-  int gameBut;
+  char gameBut;
   while (!ButList.isEmpty ()){
     actionBut=ButList.pop();
     reaction=0;
@@ -34,52 +29,58 @@ void pushBut(){
   }
 }
 void chatHC06(){
-  //mesage=HC06.read();
-  mesage=Serial.read();
-  if (mesage.equalsIgnoreCase("стоп") ){
+  if (message.equalsIgnoreCase("стоп") ){
     StopTraining = true;
     training= false;
-    //HC06.println("Для завершения тренеровкеи, нажмите на последнию горящию кнопку");
     Serial.println("Для завершения тренеровкеи, нажмите на последнию горящию кнопку");
   }
   else if( training){
-    //HC06.println("Тренеровка выполняется, дождитесь завершения тренеровки.Или напишите Стоп для завершения");
     Serial.println("Тренеровка выполняется, дождитесь завершения тренеровки.Или напишите Стоп для завершения");
   }
-  else if(mesage.equalsIgnoreCase("Старт") ){
+  else if(message.equalsIgnoreCase("Старт") ){
     training=true;
     pushBut();
   }
-  else if(!mesage.charAt(0)==(',')){
-    //HC06.println("Нало записи последовательности");
+  else{
+  //if(!message.equalsIgnoreCase("Старт")){
     Serial.println("Нало записи последовательности");
-    mesage.trim();
+    message.trim();
     int STStr;
     int ENStr;
     boolean StrOn=false;
-    int t=mesage.length();
+    int t=message.length();
     for(int i =0;i<=t;i++){
       
-      if ((!mesage.charAt(i)==',')&&(!StrOn)){
+      if ((!message.charAt(i)==',')&&(!StrOn)){
         StrOn=true;
         STStr=i;
       }
-      if (mesage.charAt(i)==','){
+      if (message.charAt(i)==','){
         StrOn=false;
         ENStr=i;
       }
       if (!StrOn){
-        ButList.push(mesage.substring(STStr,ENStr).toInt());
+        ButList.push(message.substring(STStr,ENStr).toInt());
       }
   }
- // HC06.println("Конец записи последовательности.Напишите старт для начала тренеровки");
+  message="";
   Serial.println("Конец записи последовательности.Напишите старт для начала тренеровки");
  }
 }
 
 void loop() {
- // Serial.println(HC06.read());
-  if (Serial.available()){
-    chatHC06();
+  while(Serial.available())
+  {//while there is data available on the serial monitor
+    message+=char(Serial.read());//store string from serial command
+    delay(2);
+  }
+  if(!Serial.available())
+  {
+    if(message!="")
+    {//if data is available
+      Serial.println(message.equalsIgnoreCase("Старт")); //show the data
+      chatHC06();
+      message=""; //clear the data
+    }
   }
 }
