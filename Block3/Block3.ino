@@ -104,6 +104,7 @@ void Classik(){
   wait();
 }
 training=false;
+Serial.println("Тренеровка окончена");
 }
 
 
@@ -154,15 +155,14 @@ void chatHC06(){
 
 void loop() {
   while(Serial.available())
-  {//while there is data available on the serial monitor
-    message+=char(Serial.read());//store string from serial command
+  {
+    message+=char(Serial.read());
     delay(2);
   }
   if(!Serial.available())
   {
     if(message!="")
-    {//if data is available
-      //Serial.println(message.equalsIgnoreCase("Старт")); //show the data
+    {
       chatHC06();
       message=""; //clear the data
     }
