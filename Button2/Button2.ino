@@ -1,16 +1,17 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-
+#include "timer-api.h"
 RF24 radio(8,9); // "создать" модуль на пинах 9 и 10 Для Уно
-int nom= 3;                                               // номер устройства
+int nom= 4;                                               // номер устройства
 boolean sound=false;                                              //звук
 int data [2];
+int Time=0;
 
 byte address[][6] = {"1Node","2Node","3Node","4Node","5Node","6Node"};  //возможные номера труб
 
 void setup(){
-  //Serial.begin(57600); //открываем порт для связи с ПК
+  Serial.begin(57600); //открываем порт для связи с ПК
   pinMode(3,OUTPUT);
   pinMode(7,INPUT);
   radio.begin(); //активировать модуль
@@ -31,23 +32,30 @@ void setup(){
   radio.startListening();  //начинаем слушать эфир, мы приёмный модуль
 }
 
+void timer_handle_interrupts(int timer) {
+    Time=Time+1;
+}
+
 void wait(){
   radio.stopListening();
   radio.openWritingPipe(address[0]);
   data[0]=nom;
   data[1]=2;
   boolean Out=false;
+  timer_init_ISR_1KHz(TIMER_DEFAULT);
   digitalWrite(3,HIGH);
   while (Out== false){
     if (digitalRead(7)== HIGH){
       delay(50);
       if(digitalRead(7)== HIGH){
+        timer_stop_ISR(TIMER_DEFAULT);
         digitalWrite(3,LOW);
-       // Serial.println("Nachato");
         Out=true;
+        data[1]=Time;
         while (radio.write(&data,sizeof(data))){
           radio.write(&data, sizeof(data));
         }
+        Time=0;
       }
     }
   }
@@ -60,7 +68,7 @@ void loop() {
     while( radio.available(&pipeNo)){    // слушаем эфир со всех труб
       radio.read( &data, sizeof(data) );         // чиатем входящий сигнал
 
-    //  Serial.print("Recieved: ");Serial.println(data[0]); Serial.println(data[1]);
+      Serial.print("Recieved: ");Serial.print(data[0]);Serial.print(" "); Serial.println(data[1]);
    }
    if (data[0]== nom){
       data[0]=nom;
@@ -72,11 +80,11 @@ void loop() {
       }
       radio.startListening();
       radio.openReadingPipe(1,address[0]);
+      
       delay(100);
-     // Serial.print("Prov: ");
+      Serial.print("Prov: ");
       wait();
-      digitalWrite(3,LOW);
-    //  Serial.println("OK");
+      Serial.println("OK");
       data[0]=0;
    }
 

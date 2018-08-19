@@ -25,7 +25,7 @@ void setup() {
   radio.setAutoAck(1);         //режим подтверждения приёма, 1 вкл 0 выкл
   radio.setRetries(0, 15);    //(время между попыткой достучаться, число попыток)
   radio.enableAckPayload();    //разрешить отсылку данных в ответ на входящий сигнал
-  radio.setPayloadSize(32);     //размер пакета, в байтах
+  radio.setPayloadSize(sizeof(data));     //размер пакета, в байтах
 
   radio.openWritingPipe(address[0]);   //мы - труба 0, открываем канал для передачи данных
   radio.setChannel(0x60);  //выбираем канал (в котором нет шумов!)
@@ -48,11 +48,12 @@ void wait(){
       byte pipeNo;                  
       while( radio.available(&pipeNo)){    // слушаем эфир со всех труб
         radio.read( &data, sizeof(data) );         // чиатем входящий сигнал
-        Serial.print("Recieved: "); Serial.println(data[1]);
       }
-        if((data[0]== Knop) and (data[1]==2)){
-          data[1]=-1;
+        if((data[0]== Knop)&&(data[1]!=-1)){
+          Serial.print("Recieved: "); Serial.println(data[1]);
           Out=true;
+          Serial.print("Зaдержка: ");Serial.print(data[1]/1000);Serial.print(',');Serial.println(data[1]%1000);
+          data[1]=-1;
     }
   }
   radio.stopListening();
@@ -99,7 +100,6 @@ void Classik(){
   Serial.print("Prov: ");
   Prov();
   Serial.println("OK");
-  data[1]=1;
   Serial.print("Wait: "); Serial.println(data[0]);
   wait();
 }
